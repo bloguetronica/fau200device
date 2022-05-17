@@ -116,11 +116,11 @@ void FAU200Device::setVoltage(uint16_t voltageCode, int &errcnt, std::string &er
         std::vector<uint8_t> config = {0x60, 0x00, 0x00};  // Use the DAC's internal voltage reference (default configuration)
         cp2130_.spiWrite(config, EPOUT, errcnt, errstr);  // Send the the configuration above to the LTC2640 DAC
         std::vector<uint8_t> set = {
-            0x30,                      // Input and DAC registers updated to the given value
+            0x30,                         // Input and DAC registers updated to the given value
             (uint8_t)(voltageCode >> 4),
             (uint8_t)(voltageCode << 4)
         }
-        cp2130_.spiWrite(set, EPOUT, errcnt, errstr);  // Set the output voltage by setting the DAC
+        cp2130_.spiWrite(set, EPOUT, errcnt, errstr);  // Set the output voltage by updating the above registers
         usleep(100);  // Wait 100us, in order to prevent possible errors while disabling the chip select (workaround)
         cp2130_.disableCS(0, errcnt, errstr);  // Disable the previously enabled chip select
     }
