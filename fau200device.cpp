@@ -1,4 +1,4 @@
-/* FAU200 device class - Version 0.1.0
+/* FAU200 device class - Version 0.1.1
    Requires CP2130 class version 1.1.0 or later
    Copyright (c) 2022 Samuel Lourenço
 
@@ -20,8 +20,10 @@
 
 
 // Includes
+#include <sstream>
 #include <vector>
-#include "itusb1device.h"
+#include <unistd.h>
+#include "fau200device.h"
 
 // Definitions
 const uint8_t EPOUT = 0x01;  // Address of endpoint assuming the OUT direction
@@ -119,7 +121,7 @@ void FAU200Device::setVoltage(uint16_t voltageCode, int &errcnt, std::string &er
             0x30,                         // Input and DAC registers updated to the given value
             (uint8_t)(voltageCode >> 4),
             (uint8_t)(voltageCode << 4)
-        }
+        };
         cp2130_.spiWrite(set, EPOUT, errcnt, errstr);  // Set the output voltage by updating the above registers
         usleep(100);  // Wait 100us, in order to prevent possible errors while disabling the chip select (workaround)
         cp2130_.disableCS(0, errcnt, errstr);  // Disable the previously enabled chip select
@@ -134,7 +136,7 @@ void setVoltage(float voltage, int &errcnt, std::string &errstr)
         errstr += "In setVoltage(): Voltage must be between 0 and 4.095.\n";  // Program logic error
     } else {
         uint16_t voltageCode = (uint16_t)(voltage * 1000 + 0.5);
-        setVoltage(voltageCode, int &errcnt, std::string &errstr);
+        setVoltage(voltageCode, errcnt, errstr);
     }
 }
 
