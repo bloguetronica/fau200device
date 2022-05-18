@@ -21,8 +21,8 @@
 
 // Includes
 #include <sstream>
-#include <vector>
 #include <unistd.h>
+#include <vector>
 #include "fau200device.h"
 
 // Definitions
