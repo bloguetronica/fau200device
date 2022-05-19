@@ -1,4 +1,4 @@
-/* FAU200 device class - Version 0.2.0
+/* FAU200 device class - Version 0.3.0
    Requires CP2130 class version 1.1.0 or later
    Copyright (c) 2022 Samuel Lourenço
 
@@ -45,7 +45,6 @@ public:
     // Limits applicable to setVoltage()
     static constexpr float VOLTAGE_MIN = 0;       // Minimum voltage
     static constexpr float VOLTAGE_MAX = 4.095;   // Maximum voltage
-    static const uint16_t VOLTCODE_MAX = 0x0FFF;  // Maximum voltage code value
 
     FAU200Device();
 
@@ -62,13 +61,10 @@ public:
     CP2130::USBConfig getUSBConfig(int &errcnt, std::string &errstr);
     int open(const std::string &serial = std::string());
     void reset(int &errcnt, std::string &errstr);
-    void setVoltage(uint16_t voltageCode, int &errcnt, std::string &errstr);
     void setVoltage(float voltage, int &errcnt, std::string &errstr);
 
-    static float codeToVoltage(uint16_t voltageCode);
     static std::string hardwareRevision(const CP2130::USBConfig &config);
     static std::list<std::string> listDevices(int &errcnt, std::string &errstr);
-    static uint16_t voltageToCode(float voltage);
 };
 
 #endif  // FAU200DEVICE_H
