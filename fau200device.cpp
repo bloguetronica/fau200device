@@ -1,4 +1,4 @@
-/* FAU200 device class - Version 0.3.0
+/* FAU200 device class - Version 0.4.0
    Requires CP2130 class version 1.1.0 or later
    Copyright (c) 2022 Samuel Lourenço
 
@@ -100,6 +100,23 @@ void FAU200Device::reset(int &errcnt, std::string &errstr)
     cp2130_.reset(errcnt, errstr);
 }
 
+// Sets up and prepares the device
+void FAU200Device::setup(int &errcnt, std::string &errstr)
+{
+    CP2130::SPIMode mode;
+    mode.csmode = CP2130::CSMODEPP;  // Chip select pin mode regarding channel 0 is push-pull
+    mode.cfrq = CP2130::CFRQ1500K;  // SPI clock frequency set to 1.5MHz
+    mode.cpol = CP2130::CPOL0;  // SPI clock polarity is active high (CPOL = 0)
+    mode.cpha = CP2130::CPHA0;  // SPI data is valid on each rising edge (CPHA = 0)
+    cp2130_.configureSPIMode(0, mode, errcnt, errstr);  // Configure SPI mode for channel 0, using the above settings
+    cp2130_.disableSPIDelays(0, errcnt, errstr);  // Disable all SPI delays for channel 0
+    cp2130_.selectCS(0, errcnt, errstr);  // Enable the chip select corresponding to channel 0, and disable any others
+    std::vector<uint8_t> config = {0x60, 0x00, 0x00};  // Use the DAC's internal voltage reference (default configuration)
+    cp2130_.spiWrite(config, EPOUT, errcnt, errstr);  // Send the the configuration above to the LTC2640 DAC
+    usleep(100);  // Wait 100us, in order to prevent possible errors while disabling the chip select (workaround)
+    cp2130_.disableCS(0, errcnt, errstr);  // Disable the previously enabled chip select
+}
+
 // Sets the output voltage to a given value
 void FAU200Device::setVoltage(float voltage, int &errcnt, std::string &errstr)
 {
@@ -107,17 +124,7 @@ void FAU200Device::setVoltage(float voltage, int &errcnt, std::string &errstr)
         ++errcnt;
         errstr += "In setVoltage(): Voltage must be between 0 and 4.095.\n";  // Program logic error
     } else {
-        CP2130::SPIMode mode;
-        mode.csmode = CP2130::CSMODEPP;  // Chip select pin mode regarding channel 0 is push-pull
-        mode.cfrq = CP2130::CFRQ1500K;  // SPI clock frequency set to 1.5MHz
-        mode.cpol = CP2130::CPOL0;  // SPI clock polarity is active high (CPOL = 0)
-        mode.cpha = CP2130::CPHA0;  // SPI data is valid on each rising edge (CPHA = 0)
-        cp2130_.configureSPIMode(0, mode, errcnt, errstr);  // Configure SPI mode for channel 0, using the above settings
-        cp2130_.disableSPIDelays(0, errcnt, errstr);  // Disable all SPI delays for channel 0
         cp2130_.selectCS(0, errcnt, errstr);  // Enable the chip select corresponding to channel 0, and disable any others
-        std::vector<uint8_t> config = {0x60, 0x00, 0x00};  // Use the DAC's internal voltage reference (default configuration)
-        cp2130_.spiWrite(config, EPOUT, errcnt, errstr);  // Send the the configuration above to the LTC2640 DAC
-        // Since the LTC2640 has a 24-bit shift register and it will only acknowledge the last three bytes in a given sequence, the configuration and the voltage setting must be done separately
         uint16_t voltageCode = static_cast<uint16_t>(voltage * 1000 + 0.5);
         std::vector<uint8_t> set = {
             0x30,                         // Input and DAC registers updated to the given value

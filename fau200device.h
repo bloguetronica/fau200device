@@ -1,4 +1,4 @@
-/* FAU200 device class - Version 0.3.0
+/* FAU200 device class - Version 0.4.0
    Requires CP2130 class version 1.1.0 or later
    Copyright (c) 2022 Samuel Lourenço
 
@@ -61,6 +61,7 @@ public:
     CP2130::USBConfig getUSBConfig(int &errcnt, std::string &errstr);
     int open(const std::string &serial = std::string());
     void reset(int &errcnt, std::string &errstr);
+    void setup(int &errcnt, std::string &errstr);
     void setVoltage(float voltage, int &errcnt, std::string &errstr);
 
     static std::string hardwareRevision(const CP2130::USBConfig &config);
