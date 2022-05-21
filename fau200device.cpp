@@ -1,4 +1,4 @@
-/* FAU200 device class - Version 0.4.0
+/* FAU200 device class - Version 1.0.0
    Requires CP2130 class version 1.1.0 or later
    Copyright (c) 2022 Samuel Lourenço
 
@@ -88,7 +88,6 @@ CP2130::USBConfig FAU200Device::getUSBConfig(int &errcnt, std::string &errstr)
 }
 
 // Opens a device and assigns its handle
-// The serial number is optional since version 1.2.0
 int FAU200Device::open(const std::string &serial)
 {
     return cp2130_.open(VID, PID, serial);
@@ -105,7 +104,7 @@ void FAU200Device::setup(int &errcnt, std::string &errstr)
 {
     CP2130::SPIMode mode;
     mode.csmode = CP2130::CSMODEPP;  // Chip select pin mode regarding channel 0 is push-pull
-    mode.cfrq = CP2130::CFRQ1500K;  // SPI clock frequency set to 1.5MHz
+    mode.cfrq = CP2130::CFRQ750K;  // SPI clock frequency set to 750KHz
     mode.cpol = CP2130::CPOL0;  // SPI clock polarity is active high (CPOL = 0)
     mode.cpha = CP2130::CPHA0;  // SPI data is valid on each rising edge (CPHA = 0)
     cp2130_.configureSPIMode(0, mode, errcnt, errstr);  // Configure SPI mode for channel 0, using the above settings
@@ -127,9 +126,9 @@ void FAU200Device::setVoltage(float voltage, int &errcnt, std::string &errstr)
         cp2130_.selectCS(0, errcnt, errstr);  // Enable the chip select corresponding to channel 0, and disable any others
         uint16_t voltageCode = static_cast<uint16_t>(voltage * 1000 + 0.5);
         std::vector<uint8_t> set = {
-            0x30,                         // Input and DAC registers updated to the given value
-            (uint8_t)(voltageCode >> 4),  // Upper 8 bits of the 12-bit value
-            (uint8_t)(voltageCode << 4)   // Lower 4 bits of the value, followed by four zero bits
+            0x30,                                    // Input and DAC registers updated to the given value
+            static_cast<uint8_t>(voltageCode >> 4),  // Upper 8 bits of the 12-bit value
+            static_cast<uint8_t>(voltageCode << 4)   // Lower 4 bits of the value, followed by four zero bits
         };
         cp2130_.spiWrite(set, EPOUT, errcnt, errstr);  // Set the output voltage by updating the above registers
         usleep(100);  // Wait 100us, in order to prevent possible errors while disabling the chip select (workaround)
